@@ -42,6 +42,8 @@ class BleKeyboard: public AbcKeyboard, public BLEServerCallbacks, public BLEChar
         virtual void releaseAll(void) override;
         virtual void setName(std::string deviceName) override;  
         virtual void setDelay(uint32_t ms) override;
+        virtual size_t write(uint8_t c) override;
+        virtual size_t write(const uint8_t *buffer, size_t size) override;
 
         virtual void set_vendor_id(uint16_t vid);
         virtual void set_product_id(uint16_t pid);

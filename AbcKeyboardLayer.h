@@ -13,7 +13,7 @@ typedef struct
     uint8_t keys[6];
 } KeyReport;
 
-class AbcKeyboard : public Print
+class AbcKeyboard: public Print
 {
 protected:
     KeyReport          _keyReport;
@@ -36,9 +36,9 @@ public:
     virtual void sendReport(KeyReport* keys)=0;
     virtual size_t press(uint8_t k) = 0;
     virtual size_t release(uint8_t k)=0;
+    virtual void releaseAll(void)=0;
     virtual size_t write(uint8_t c)=0;
     virtual size_t write(const uint8_t *buffer, size_t size)=0;
-    virtual void releaseAll(void)=0;
     virtual void setName(std::string deviceName)=0;  
     virtual void setDelay(uint32_t ms)=0;
 };

@@ -185,7 +185,8 @@ size_t BleKeyboard::press(uint8_t k)
     if (_keyReport.keys[0] != k && _keyReport.keys[1] != k &&
         _keyReport.keys[2] != k && _keyReport.keys[3] != k &&
         _keyReport.keys[4] != k && _keyReport.keys[5] != k) {
-        for (i=0; i<6; i++) {
+        int i=0;
+        for (; i<6; i++) {
             if (_keyReport.keys[i] == 0x00) {
                 _keyReport.keys[i] = k;
                 break;
@@ -202,17 +203,16 @@ size_t BleKeyboard::press(uint8_t k)
 
 size_t BleKeyboard::release(uint8_t k)
 {
-    if (k)
-    uint8_t i;
     if (0xe0<=k && k<0xe8){
         _keyReport.modifiers &= ~(1<<(k-224));
         k = 0;
+        return 1;
     }
 
     // Test the key report to see if k is present.  Clear it if it exists.
     // Check all positions in case the key is present more than once (which it shouldn't be)
     // 芯片稍微快点，ram稍微大点，其实完全可以全键直接映射，最后report的时候一次性过滤，用不着在这里遍历
-    for (i=0; i<6; i++) {
+    for (int i=0; i<6; i++) {
         if (0 != k && _keyReport.keys[i] == k) {
             _keyReport.keys[i] = 0x00;
         }
@@ -232,6 +232,28 @@ void BleKeyboard::releaseAll(void)  // 很好奇这个在什么时候会用到
     _keyReport.keys[5] = 0;
     _keyReport.modifiers = 0;
     sendReport(&_keyReport);
+}
+
+size_t BleKeyboard::write(uint8_t c)
+{
+    uint8_t p = press(c);  // Keydown
+    release(c);            // Keyup
+    return p;              // just return the result of press() since release() almost always returns 1
+}
+
+size_t BleKeyboard::write(const uint8_t *buffer, size_t size) {
+    size_t n = 0;
+    while (size--) {
+            if (*buffer != '\r') {
+                    if (write(*buffer)) {
+                        n++;
+                    } else {
+                        break;
+                    }
+            }
+            buffer++;
+    }
+    return n;
 }
 
 void BleKeyboard::onConnect(BLEServer* pServer) {
