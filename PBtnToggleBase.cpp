@@ -56,9 +56,12 @@ void PBtnToggleBase::onRelease(ToggleFunc callback) {
 void PBtnToggleBase::trigger_events_(bool btn_pressed) {
     if (btn_pressed) {
         // button pressed, trigger press event if not triggered already
+        Serial.printf("btn %d is pressed\n", btn_);
         if (!state_press_triggered_()) {
+            Serial.printf("btn %d is being triggered\n", btn_);
             // if last event was long press, then do not trigger this press event
             if (!state_longpress_triggered_() && PBtnToggleBase::on_press_callback_) {
+                Serial.printf("btn %d triggers on press callback", btn_);
                 PBtnToggleBase::on_press_callback_(PBtnToggleBase::btn_, state_pressed_on_high_()?HIGH:LOW);
             }
             // if no long press event callback set, then stop press timer
@@ -73,6 +76,7 @@ void PBtnToggleBase::trigger_events_(bool btn_pressed) {
         }
         // longpress event callback set but not triggered, button press period reached long press state
         if (PBtnToggleBase::on_long_press_callback_ && !state_longpress_triggered_() && PBtnToggleBase::timer_ + PBTNTOGGLEBASE_LONGCLICK_TIME < millis()) {
+            Serial.printf("btn %d triggers on lonng press callback\n", btn_);
             bool noSkip = PBtnToggleBase::on_long_press_callback_(PBtnToggleBase::btn_, state_pressed_on_high_()?HIGH:LOW);
             // if long press callback returns true, then set longpress event status as triggered, this will make button release not to trigger release event
             if (noSkip) {
@@ -107,19 +111,22 @@ void PBtnToggleBase::trigger_events_(bool btn_pressed) {
  */
 void PBtnToggleBase::check() {
     if (state_is_running_()) {
+        Serial.printf("btn %d state is running, ignore\n", btn_);
         return;
     }
+    // Serial.printf("btn %d state is %d\n", btn_, state_);
     state_is_running_(true);
 
     // get current button state
     bool btn_pressed = this->is_btn_pressed_();
 
     // has state changed during last check
-    bool btn_state_changed = btn_pressed != state_was_button_pressed_();
-    state_was_button_pressed_(btn_pressed);
+    bool btn_state_changed = btn_pressed != state_was_button_pressed_();  // 读第6位
+    state_was_button_pressed_(btn_pressed);  // 设置第6位
 
     // trigger event if debounce time is passed
-    if (!btn_state_changed && PBtnToggleBase::timer_ + PBTNTOGGLEBASE_CLICK_DEBOUNCE_TIME < millis() && state_press_timer_started_()) {
+    // btn state没变 && 持续时间超过了PBTNTOGGLEBASE_CLICK_DEBOUNCE_TIME
+    if (state_press_timer_started_() && !btn_state_changed && PBtnToggleBase::timer_ + PBTNTOGGLEBASE_CLICK_DEBOUNCE_TIME < millis()) {
         PBtnToggleBase::trigger_events_(btn_pressed);
     }
 
@@ -138,9 +145,6 @@ int PBtnToggleBase::getPin() {
     return this->btn_;
 }
 
-
-
-
 /**
  * Check if initial
  */
@@ -150,7 +154,7 @@ bool PBtnToggleBase::state_press_timer_started_() {
 /**
  * Set current running state
  */
-void PBtnToggleBase::state_press_timer_started_(bool set) {
+void PBtnToggleBase::state_press_timer_started_(bool set) {  // 这位运算玩得... 这么缺内存么
     state_set_state_(set, 0);
 }
 

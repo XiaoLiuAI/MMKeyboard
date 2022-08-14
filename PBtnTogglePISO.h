@@ -16,6 +16,7 @@ class PBtnTogglePISO : public PBtnToggleBase {
 #ifdef ONLY_FOR_DOXYGEN
         void check();
 #endif
+        byte get_chip_sates(){return chip_states_;}
     private:
         PBtnTogglePISO *next_piso_button_;
         void append_button(PBtnTogglePISO *btn);

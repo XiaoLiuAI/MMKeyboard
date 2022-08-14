@@ -1,4 +1,6 @@
 #include "PBtnTogglePISOController.h"
+#include "Arduino.h"
+#include "utils.h"
 
 /**
  * Initialize PISO chip controller.
@@ -18,6 +20,16 @@ PBtnTogglePISOController::PBtnTogglePISOController(int chips, int data_pin, int 
     pinMode(data_pin, INPUT);
     pinMode(clock_pin, OUTPUT);
     pinMode(latch_pin, OUTPUT);
+}
+
+void PBtnTogglePISOController::report(){
+    Serial.println("<----------controller report start---------->");
+    PBtnTogglePISO *tmp = button_;
+    while(tmp){
+        Serial.printf("controlled button at pin %d\n" ,tmp -> btn_);
+        tmp = tmp->next_piso_button_;
+    }
+    Serial.println("<----------controller report end---------->");
 }
 
 /**
@@ -54,6 +66,8 @@ void PBtnTogglePISOController::check() {
     byte states[chips_];
     for (int i = 0; i < chips_; i++) {
         states[i] = shiftIn165();  // 时序依次读取所有芯片的寄存器值，比另一个示例代码少了一个时钟使能的操作
+        // Serial.printf("state on chip %d is ", i);
+        // serialPrintBinary(states[i]);
     }
 
     // check buttons states

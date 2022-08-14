@@ -16,18 +16,6 @@ typedef std::function<void(int, int, int, int)> matrix_callback;
 typedef std::function<bool(int, int, int, int)> matrix_long_callback;
 
 
-//                  from /Users/xiaoliu/ExSpace/Arduino/esp32-study/SendKeyStrokes/SendKeyStrokes.ino:5:
-// /Users/xiaoliu/ExSpace/Arduino/esp32-study/SendKeyStrokes/PhysicalKeyboardLayer.h: In member function 'void PhysicalKeyboard::onMatrixPress(int, int, matrix_callback)':
-// PhysicalKeyboardLayer.h:66:37: error: 
-// conversion from 'std::_Bind_helper<false, std::function<void(int, int, int, int)>&, int&, int&, const std::_Placeholder<3>&, const std::_Placeholder<4>&>::type' 
-// {aka 'std::_Bind<std::function<void(int, int, int, int)>(int, int, std::_Placeholder<3>, std::_Placeholder<4>)>'} 
-// to 
-// non-scalar type 'ToggleFunc' {aka 'std::function<void(int, int)>'} requested
-//              ToggleFunc f = std::bind(callback, i, j, std::placeholders::_3, std::placeholders::_4);
-
-// aka 'std::_Bind<std::function<void(int, int, int, int)>*(int, int, std::_Placeholder<3>, std::_Placeholder<4>)>'
-// aka 'std::function<void(int, int)>'
-
 class PhysicalKeyboard
 {
     public:
@@ -58,6 +46,8 @@ class PhysicalKeyboard
                 new (thumb_btns+i) PBtnTogglePISO(_num_rows, i, HIGH);
                 btnController -> add(thumb_btns+i);
             }
+
+            btnController -> report();
         }
         ~PhysicalKeyboard(){}
         void loop(){
@@ -88,6 +78,7 @@ class PhysicalKeyboard
         uint8_t get_num_rows(){return _num_rows;}
         uint8_t get_num_cols(){return _num_cols;}
         uint8_t get_num_thum_keys(){return _num_thumb_keys;}
+        PBtnTogglePISO* get_matrix_btn(int i, int j){return &btn_matrix[i][j];}
         
     protected:
         uint8_t _num_rows;

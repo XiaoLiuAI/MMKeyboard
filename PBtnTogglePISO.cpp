@@ -1,4 +1,5 @@
 #include "PBtnTogglePISO.h"
+#include "utils.h"
 
 /**
  * Initialize button handler by providing PISO chip data input (Dn) number, chip number and pin state on button press.
@@ -19,7 +20,9 @@ PBtnTogglePISO::PBtnTogglePISO(int chip, int btn_pin, int pressed_state): PBtnTo
  */
 bool PBtnTogglePISO::is_btn_pressed_() {
     int btn = btn_ % 8;
-    return (bitRead(chip_states_, btn) == 1) == (bitRead(state_, 5) == 1);
+    return (bitRead(chip_states_, btn) == 1) == (bitRead(state_, 5) == 1);  
+    // return bitRead(chip_states_, btn) == bitRead(state_, 5);
+    // state_ 第5位为自定义的联通电位. 这两个电位直接做等号不就结了？为什么要各自等于一，再相等？
 }
 
 
@@ -44,6 +47,8 @@ void PBtnTogglePISO::check(byte *states) {
     int chip = floor(btn_ / 8);
     chip_states_ = states[chip];
 
+    // Serial.printf("button %d check chip %d state ", btn_, chip);
+    // serialPrintBinary(chip_states_);
     PBtnToggleBase::check();
     if (next_piso_button_) {
         next_piso_button_->check(states);

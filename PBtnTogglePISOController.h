@@ -16,6 +16,7 @@ public:
     PBtnTogglePISOController(int chips, int data_pin, int clock_pin, int latch_pin_);
     void add(PBtnTogglePISO *btn);
     void check();
+    void report();
 private:
     int chips_;
     int data_pin_;
