@@ -20,6 +20,11 @@ PBtnTogglePISO::PBtnTogglePISO(int chip, int btn_pin, int pressed_state): PBtnTo
  */
 bool PBtnTogglePISO::is_btn_pressed_() {
     int btn = btn_ % 8;
+    // Serial.printf(
+    //     "chip states bit %d, state_ bit %d, is pressed %d\n", 
+    //     bitRead(chip_states_, btn), bitRead(state_, 5), 
+    //     (bitRead(chip_states_, btn) == 1) == (bitRead(state_, 5) == 1)
+    // );
     return (bitRead(chip_states_, btn) == 1) == (bitRead(state_, 5) == 1);  
     // return bitRead(chip_states_, btn) == bitRead(state_, 5);
     // state_ 第5位为自定义的联通电位. 这两个电位直接做等号不就结了？为什么要各自等于一，再相等？

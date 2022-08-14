@@ -12,6 +12,7 @@
 
 #include "Arduino.h"
 #include <functional>
+// #include <iostream>
 
 /**
  * A type definition for press/release event callback function
@@ -32,7 +33,8 @@ class PBtnToggleBase {
         void onLongPress(LongPressFunc callback);
         void onRelease(ToggleFunc callback);
         void check();
-        int getPin();
+        int  getPin();
+        void reportStatus(char *loc);
     protected:
         int btn_;
         long timer_;

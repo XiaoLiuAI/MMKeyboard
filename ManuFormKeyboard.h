@@ -42,13 +42,13 @@ const uint8_t default_right_thumbs_map[6] = {
 #define num_thum_keys 6
 
 
-class MultiModalKeyboard: public PhysicalKeyboard  // TODO 模板元编程
+class ManuFormKeyboard: public PhysicalKeyboard  // TODO 模板元编程
 {
     // TODO 键值remap
     // TODO 键盘宏
     // TODO 特殊的键转换Fn
     public:
-        MultiModalKeyboard(
+        ManuFormKeyboard(
             bool right_hand,
             int chips, int data_pin, int clk_pin, int shift_load_pin, 
             BleKeyboard &bleKeyboard
@@ -62,7 +62,7 @@ class MultiModalKeyboard: public PhysicalKeyboard  // TODO 模板元编程
                         matrix_keymap[i][j] = default_left_matrix_map[i][j];
                     }
                     // C++ knowledge bind/function for closure
-                    onMatrixPress(i, j, std::bind(&MultiModalKeyboard::onMatrixButtonPress, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+                    onMatrixPress(i, j, std::bind(&ManuFormKeyboard::onMatrixButtonPress, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
                     // onLongPress(false, i*num_rows+j, this->onButtonLongPress)
                     // onRelease(false, i*num_rows+j, this->onButtonRelease)
                 }
@@ -73,13 +73,13 @@ class MultiModalKeyboard: public PhysicalKeyboard  // TODO 模板元编程
                 }else{
                     thumb_keymap[i] = default_right_thumbs_map[i];
                 }
-                onThumbPress(i+num_cols*num_rows, std::bind(&MultiModalKeyboard::onThumbButtonPress, this, std::placeholders::_1, std::placeholders::_2));
+                onThumbPress(i+num_cols*num_rows, std::bind(&ManuFormKeyboard::onThumbButtonPress, this, std::placeholders::_1, std::placeholders::_2));
                 // onPress(true, i, this->onButtonPress)
                 // onLongPress(true, i, this->onButtonLongPress)
                 // onRelease(true, i, this->onButtonRelease)
             }
         }
-        ~MultiModalKeyboard(){}
+        ~ManuFormKeyboard(){}
         void loop(){
             btnController->check();
         }

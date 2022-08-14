@@ -61,7 +61,7 @@ void PBtnToggleBase::trigger_events_(bool btn_pressed) {
             Serial.printf("btn %d is being triggered\n", btn_);
             // if last event was long press, then do not trigger this press event
             if (!state_longpress_triggered_() && PBtnToggleBase::on_press_callback_) {
-                Serial.printf("btn %d triggers on press callback", btn_);
+                Serial.printf("btn %d triggers on press callback\n", btn_);
                 PBtnToggleBase::on_press_callback_(PBtnToggleBase::btn_, state_pressed_on_high_()?HIGH:LOW);
             }
             // if no long press event callback set, then stop press timer
@@ -87,13 +87,16 @@ void PBtnToggleBase::trigger_events_(bool btn_pressed) {
             state_press_timer_started_(false);
         }
     } else {
+        Serial.printf("btn %d is released\n", btn_);
         // if no press or longpress triggered before, then stop timer
         if (!state_press_triggered_() && !state_longpress_triggered_()) {
+            Serial.printf("btn %d does not have to trigger release\n", btn_);
             state_press_timer_started_(false);
             return;
         }
         // trigger release
         if (!state_release_triggered_() && !state_longpress_triggered_() && state_press_triggered_()) {
+            Serial.printf("btn %d trigger release\n", btn_);
             if (PBtnToggleBase::on_release_callback_) {
                 PBtnToggleBase::on_release_callback_(PBtnToggleBase::btn_, !state_pressed_on_high_()?HIGH:LOW);
             }
@@ -106,36 +109,65 @@ void PBtnToggleBase::trigger_events_(bool btn_pressed) {
     }
 }
 
+void PBtnToggleBase::reportStatus(char *loc){
+    // Serial.println(loc);
+    // Serial.printf(
+    //     "btn %d: is_running %d, is pressed %d, was pressed %d, timer started %d, triggered %d, long press triggered %d, release_triggered %d, press on high %d\n", 
+    //     btn_, 
+    //     state_is_running_(), 
+    //     is_btn_pressed_(),
+    //     state_was_button_pressed_(), 
+    //     state_press_timer_started_(),
+    //     state_press_triggered_(),
+    //     state_longpress_triggered_(),
+    //     state_release_triggered_(),
+    //     state_pressed_on_high_()
+    // );
+}
+
 /**
  * Check button state and trigger event callback functions. This method must be called in loop()
  */
 void PBtnToggleBase::check() {
-    if (state_is_running_()) {
-        Serial.printf("btn %d state is running, ignore\n", btn_);
+    if (state_is_running_()) { 
+        reportStatus("state is running, ignore");
+        // delay(1000);
         return;
     }
-    // Serial.printf("btn %d state is %d\n", btn_, state_);
     state_is_running_(true);
+    reportStatus("after set is running to true");
+    
 
     // get current button state
     bool btn_pressed = this->is_btn_pressed_();
+    bool btn_was_pressed = state_was_button_pressed_();
 
     // has state changed during last check
-    bool btn_state_changed = btn_pressed != state_was_button_pressed_();  // 读第6位
+    bool btn_state_changed = btn_pressed != btn_was_pressed;  // 读第6位
     state_was_button_pressed_(btn_pressed);  // 设置第6位
 
     // trigger event if debounce time is passed
     // btn state没变 && 持续时间超过了PBTNTOGGLEBASE_CLICK_DEBOUNCE_TIME
-    if (state_press_timer_started_() && !btn_state_changed && PBtnToggleBase::timer_ + PBTNTOGGLEBASE_CLICK_DEBOUNCE_TIME < millis()) {
+    bool v = state_press_timer_started_();
+    long due_time = PBtnToggleBase::timer_ + PBTNTOGGLEBASE_CLICK_DEBOUNCE_TIME;
+    long cur_time = millis();
+    // Serial.printf("press timer started %d, due_time %d, cur_time %d\n", v, due_time, cur_time);
+    if (v && !btn_state_changed && due_time < cur_time) {
+        reportStatus("before trigger");
         PBtnToggleBase::trigger_events_(btn_pressed);
+        reportStatus("after trigger");
     }
 
     // reset timer if state has changed
     if (btn_state_changed) {
+        Serial.printf("btn_pressed %d, btn_was_pressed %d", btn_pressed, btn_was_pressed);
         PBtnToggleBase::timer_ = millis();
         state_press_timer_started_(true);
+        reportStatus("after state changed");
     }
     state_is_running_(false);
+    reportStatus("after set is running to false");
+    // delay(1000);
 }
 
 /**
@@ -155,6 +187,7 @@ bool PBtnToggleBase::state_press_timer_started_() {
  * Set current running state
  */
 void PBtnToggleBase::state_press_timer_started_(bool set) {  // 这位运算玩得... 这么缺内存么
+    Serial.printf("set btn %d timer started to %d\n", btn_, set);
     state_set_state_(set, 0);
 }
 

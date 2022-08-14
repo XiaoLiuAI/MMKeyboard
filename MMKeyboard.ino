@@ -4,8 +4,24 @@
 #include "PhysicalKeyboardLayer.h"
 #include "utils.h"
 
+
+#define data_pin 25
+#define clk_pin 26
+#define shift_pin 27
+
 BleKeyboard bleKeyboard;
+
+#define PHY_KEYBOARD 1;
+
+#ifdef PHY_KEYBOARD
 PhysicalKeyboard *physicalKeyboard;
+#endif
+
+#ifdef SINGLE_BTN
+PBtnTogglePISOController *btnController = new PBtnTogglePISOController(2, data_pin, clk_pin, shift_pin);
+PBtnTogglePISO *pbtn = new PBtnTogglePISO(0, 0, HIGH);
+#endif
+
 
 void setup() {
 
@@ -13,7 +29,9 @@ void setup() {
     Serial.println("Starting BLE work!");
     bleKeyboard.begin();
 
-    physicalKeyboard = new PhysicalKeyboard(2, 25, 26, 27, 1);
+#ifdef PHY_KEYBOARD
+    Serial.println("initial physical key board");
+    physicalKeyboard = new PhysicalKeyboard(2, 25, 26, 27, 1, 1, 0);
 
     for (int i=0; i<physicalKeyboard->get_num_rows(); i++){
         for (int j=0; j<physicalKeyboard->get_num_rows(); j++){
@@ -22,8 +40,40 @@ void setup() {
             physicalKeyboard->onMatrixLongPress(i, j, test_matrix_long_callback);
         }
     }
+#endif
+
+#ifdef SINGLE_BTN
+    pbtn->onPress(test_btn_callback);
+    pbtn->onLongPress(test_btn_long_callback);
+    btnController->add(pbtn);
+    Serial.println("btn is initialized as ");
+    pbtn->reportStatus("setup");
+#endif
 }
 
+#ifdef SINGLE_BTN
+void test_btn_callback(int btn, int state){
+    if (state){
+        Serial.printf("btn on pin %d is pressed with chip states ", btn);
+    }else{
+        Serial.printf("btn on pin %d is released with chip states ", btn);
+    }
+    
+    serialPrintBinary(pbtn->get_chip_sates());
+}
+
+bool test_btn_long_callback(int btn, int state){
+    if (state){
+        Serial.printf("btn on pin %d is long pressed with state %d with chip states ", btn, state);
+    }else{
+        Serial.printf("btn on pin %d is long pressed with state %d with chip states ", btn, state);
+    }
+    serialPrintBinary(pbtn->get_chip_sates());
+    return false;
+}
+#endif
+
+#ifdef PHY_KEYBOARD
 void test_matrix_callback(int i, int j, int btn, int state){
     Serial.printf("btn (%d, %d) on pin %d is pressed, and has state %d with chip states ", i, j, btn, state);
     serialPrintBinary(physicalKeyboard->get_matrix_btn(i, j)->get_chip_sates());
@@ -34,6 +84,7 @@ bool test_matrix_long_callback(int i, int j, int btn, int state){
     serialPrintBinary(physicalKeyboard->get_matrix_btn(i, j)->get_chip_sates());
     return false;
 }
+#endif
 
 void loop() {
     if(bleKeyboard.isConnected()) {
@@ -75,7 +126,13 @@ void loop() {
         */
     }
 
+#ifdef PHY_KEYBOARD
     physicalKeyboard->loop();
+#endif
+
+#ifdef SINGLE_BTN
+    btnController -> check();
+#endif
 
 //   Serial.println("Waiting 1 seconds...");
 //   delay(1000);
