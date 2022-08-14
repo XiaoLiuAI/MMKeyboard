@@ -20,10 +20,11 @@ class PhysicalKeyboard
 {
     public:
         PhysicalKeyboard(
-            int chips, int data_pin, int clk_pin, int shift_load_pin, 
+            int data_pin, int clk_pin, int shift_load_pin, 
             uint8_t num_rows=6, uint8_t num_cols=7, uint8_t num_thumb_keys=6)
         :_num_rows(num_rows), _num_cols(num_cols), _num_thumb_keys(num_thumb_keys){
-            btnController = new PBtnTogglePISOController(chips, data_pin, clk_pin, shift_load_pin);  // 这个库的实现没有使用CE引脚，不是很好
+            // 拇指列如果不为0，chips数量为行数+1
+            btnController = new PBtnTogglePISOController(num_rows+(int) (num_thumb_keys > 0), data_pin, clk_pin, shift_load_pin);  // 这个库的实现没有使用CE引脚，不是很好
 
             // 因为我最大配列只到7列，所以这里稍微浪费了几个IO
             btn_matrix = new PBtnTogglePISO*[_num_rows];

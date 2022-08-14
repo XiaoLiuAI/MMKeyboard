@@ -15,7 +15,7 @@ BleKeyboard bleKeyboard;
 #ifdef MM_KEYBOARD
 #include "ManuFormKeyboard.h"
 
-ManuFormKeyboard *mm_keyboard = new ManuFormKeyboard(true, 2, data_pin, clk_pin, shift_pin, &bleKeyboard);
+ManuFormKeyboard *mm_keyboard;
 #endif
 
 #ifdef PHY_KEYBOARD
@@ -36,12 +36,13 @@ PBtnTogglePISO *pbtn = new PBtnTogglePISO(0, 0, HIGH);
 void setup() {
 
     Serial.begin(115200);
+    Serial.println();
     Serial.println("Starting BLE work!");
     bleKeyboard.begin();
 
 #ifdef PHY_KEYBOARD
     Serial.println("initial physical key board");
-    physicalKeyboard = new PhysicalKeyboard(2, data_pin, clk_pin, shift_pin, 1, 1, 0);
+    physicalKeyboard = new PhysicalKeyboard(data_pin, clk_pin, shift_pin, 1, 1, 0);
 
     for (int i=0; i<physicalKeyboard->get_num_rows(); i++){
         for (int j=0; j<physicalKeyboard->get_num_rows(); j++){
@@ -61,6 +62,7 @@ void setup() {
 #endif
 
 #ifdef MM_KEYBOARD
+    mm_keyboard = new ManuFormKeyboard(true, data_pin, clk_pin, shift_pin, &bleKeyboard);
     mm_keyboard->reportKeyMap();
 #endif
 }

@@ -51,10 +51,10 @@ class ManuFormKeyboard: public PhysicalKeyboard  // TODO 模板元编程
     public:
         ManuFormKeyboard(
             bool right_hand,
-            int chips, int data_pin, int clk_pin, int shift_load_pin, 
+            int data_pin, int clk_pin, int shift_load_pin, 
             BleKeyboard *bleKeyboard
-        ):PhysicalKeyboard(chips, data_pin, clk_pin, shift_load_pin, num_rows, num_cols, num_thum_keys), _right_hand(right_hand), _bleKeyboard(bleKeyboard){
-            // EEPROM.begin(num_rows * num_cols);
+        ):PhysicalKeyboard(data_pin, clk_pin, shift_load_pin, num_rows, num_cols, num_thum_keys), _right_hand(right_hand), _bleKeyboard(bleKeyboard){
+            EEPROM.begin(num_rows * num_cols);
             for (int i=0; i<num_rows; i++){
                 for(int j=0; j<num_cols; j++){
                     // matrix_keymap[i][j] = EEPROM.read(i*num_cols+j);
@@ -71,19 +71,28 @@ class ManuFormKeyboard: public PhysicalKeyboard  // TODO 模板元编程
                     // onRelease(false, i*num_rows+j, this->onButtonRelease)
                 }
             }
-            // for (int i=0; i<num_thum_keys; i++){
-            //     if(right_hand){
-            //         thumb_keymap[i] = default_left_thumbs_map[i];
-            //     }else{
-            //         thumb_keymap[i] = default_right_thumbs_map[i];
-            //     }
-            //     onThumbPress(i+num_cols*num_rows, std::bind(&ManuFormKeyboard::thumbButtonPressCallback, this, std::placeholders::_1, std::placeholders::_2));
-            //     // onPress(true, i, this->onButtonPress)
-            //     // onLongPress(true, i, this->onButtonLongPress)
-            //     // onRelease(true, i, this->onButtonRelease)
-            // }
+            int num_matrix_key = num_cols*num_rows;
+            for (int i=0; i<num_thum_keys; i++){
+                if(right_hand){
+                    thumb_keymap[i] = default_left_thumbs_map[i];
+                }else{
+                    thumb_keymap[i] = default_right_thumbs_map[i];
+                }
+                onThumbPress(i+num_matrix_key, std::bind(&ManuFormKeyboard::thumbButtonPressCallback, this, std::placeholders::_1, std::placeholders::_2));
+                // onPress(true, i, this->onButtonPress)
+                // onLongPress(true, i, this->onButtonLongPress)
+                // onRelease(true, i, this->onButtonRelease)
+            }
         }
         ~ManuFormKeyboard(){}
+        void remapKey(i, j, vi, vj){
+            if (_right_hand){
+                matrix_keymap[i][j] = default_left_matrix_map[vi][vj];
+            }else{
+                matrix_keymap[i][j] = default_right_matrix_map[vi][vj];
+            }
+            // TODO write into eeprom;
+        }
         void loop(){
             btnController->check();
         }
@@ -93,13 +102,13 @@ class ManuFormKeyboard: public PhysicalKeyboard  // TODO 模板元编程
             Serial.print(" which represents ");
             Serial.printf("%d, %c\n", matrix_keymap[i][j], matrix_keymap[i][j]);
         }
-        // void thumbButtonPressCallback(int btn, int status) {
-        //     btn = btn-num_cols*num_rows;
-        //     Serial.print("Button pressed on pin ");
-        //     Serial.print(btn);
-        //     Serial.print(" which represents ");
-        //     Serial.printf("%d, %c\n", thumb_keymap[btn], thumb_keymap[btn]);
-        // }
+        void thumbButtonPressCallback(int btn, int status) {
+            Serial.print("Button pressed on pin ");
+            Serial.print(btn);
+            btn = btn-num_cols*num_rows;
+            Serial.print(" which represents ");
+            Serial.printf("%d, %c\n", thumb_keymap[btn], thumb_keymap[btn]);
+        }
         // bool onButtonLongPress(int btn, int status) {
         //     Serial.print("Long button press on pin ");
         //     Serial.println(btn);
@@ -117,6 +126,11 @@ class ManuFormKeyboard: public PhysicalKeyboard  // TODO 模板元编程
                 }
                 Serial.println();
             }
+            Serial.println("thumb key map");
+            for (int i=0; i<num_thum_keys; i++){
+                Serial.printf("(%d)=%s\t", i, key_2_desc[(uint8_t) thumb_keymap[i]]);
+            }
+            Serial.println();
         }
 
     private: 
