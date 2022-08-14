@@ -113,7 +113,7 @@ class ManuFormKeyboard: public PhysicalKeyboard  // TODO 模板元编程
             Serial.println("matrix key map");
             for (int i=0; i<num_rows; i++){
                 for(int j=0; j<num_cols; j++){
-                    Serial.printf("(%d, %d)=%s\t", i, j, key_2_desc[matrix_keymap[i][j]]);
+                    Serial.printf("(%d, %d)=%s\t", i, j, key_2_desc[(uint8_t) matrix_keymap[i][j]]);
                 }
                 Serial.println();
             }

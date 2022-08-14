@@ -287,7 +287,7 @@
 
 #include <iostream>
 
-const std::string key_2_desc[256] = {
+const char* key_2_desc[256] = {
     "KEY_NONE",
     "KEY_ERR_OVF",
     "KEY POST Fail",
