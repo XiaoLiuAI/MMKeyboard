@@ -7,6 +7,7 @@
 #include "BleKeyboardLayer.h"
 #include "usb_hid_keys.h"
 #include <functional>
+#include "EEPROM.h"
 
 // TODO 其它键盘配列
 
@@ -14,7 +15,7 @@ const uint8_t default_left_matrix_map[6][7] = {
     {KEY_ESC, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_NONE},
     {KEY_EQUAL, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_NONE},
     {KEY_TAB, KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_NONE},
-    {KEY_CAPS_LOCK, KEY_A, KEY_S, KEY_D, KEY_F, KEY_G, KEY_NONE},
+    {KEY_CAPSLOCK, KEY_A, KEY_S, KEY_D, KEY_F, KEY_G, KEY_NONE},
     {KEY_LEFTSHIFT, KEY_Z, KEY_X, KEY_C, KEY_V, KEY_B, KEY_NONE},
     {KEY_NONE, KEY_GRAVE, KEY_BACKSLASH, KEY_LEFT, KEY_RIGHT, KEY_NONE, KEY_NONE}
 };
@@ -33,7 +34,7 @@ const uint8_t default_left_thumbs_map[6] = {
 };
 
 const uint8_t default_right_thumbs_map[6] = {
-    KEY_RIGHTMETA, KEY_HOME, KEY_RIGHTCTRL, KEY_PAGE_UP, KEY_PAGE_DOWN, KEY_RETURN
+    KEY_RIGHTMETA, KEY_HOME, KEY_RIGHTCTRL, KEY_PAGEUP, KEY_PAGEDOWN, KEY_ENTER
 };
 
 
@@ -44,58 +45,61 @@ const uint8_t default_right_thumbs_map[6] = {
 
 class ManuFormKeyboard: public PhysicalKeyboard  // TODO 模板元编程
 {
-    // TODO 键值remap
+    // TODO 键值remap, 怎么启动remap，remap的值存在哪里，怎么加载，怎么判断是否有remap存在？怎么还原
     // TODO 键盘宏
     // TODO 特殊的键转换Fn
     public:
         ManuFormKeyboard(
             bool right_hand,
             int chips, int data_pin, int clk_pin, int shift_load_pin, 
-            BleKeyboard &bleKeyboard
+            BleKeyboard *bleKeyboard
         ):PhysicalKeyboard(chips, data_pin, clk_pin, shift_load_pin, num_rows, num_cols, num_thum_keys), _right_hand(right_hand), _bleKeyboard(bleKeyboard){
+            // EEPROM.begin(num_rows * num_cols);
             for (int i=0; i<num_rows; i++){
-                for(int j=0; j<_num_cols; j++){
+                for(int j=0; j<num_cols; j++){
+                    // matrix_keymap[i][j] = EEPROM.read(i*num_cols+j);
+                    // if (matrix_keymap[i][j] == 0){
                     if(_right_hand){
-                        // TODO 掉电存储
                         matrix_keymap[i][j] = default_right_matrix_map[i][j];
                     }else{
                         matrix_keymap[i][j] = default_left_matrix_map[i][j];
                     }
+                    // }
                     // C++ knowledge bind/function for closure
-                    onMatrixPress(i, j, std::bind(&ManuFormKeyboard::onMatrixButtonPress, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+                    onMatrixPress(i, j, std::bind(&ManuFormKeyboard::matrixButtonPressCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
                     // onLongPress(false, i*num_rows+j, this->onButtonLongPress)
                     // onRelease(false, i*num_rows+j, this->onButtonRelease)
                 }
             }
-            for (int i=0; i<num_thum_keys; i++){
-                if(right_hand){
-                    thumb_keymap[i] = default_left_thumbs_map[i];
-                }else{
-                    thumb_keymap[i] = default_right_thumbs_map[i];
-                }
-                onThumbPress(i+num_cols*num_rows, std::bind(&ManuFormKeyboard::onThumbButtonPress, this, std::placeholders::_1, std::placeholders::_2));
-                // onPress(true, i, this->onButtonPress)
-                // onLongPress(true, i, this->onButtonLongPress)
-                // onRelease(true, i, this->onButtonRelease)
-            }
+            // for (int i=0; i<num_thum_keys; i++){
+            //     if(right_hand){
+            //         thumb_keymap[i] = default_left_thumbs_map[i];
+            //     }else{
+            //         thumb_keymap[i] = default_right_thumbs_map[i];
+            //     }
+            //     onThumbPress(i+num_cols*num_rows, std::bind(&ManuFormKeyboard::thumbButtonPressCallback, this, std::placeholders::_1, std::placeholders::_2));
+            //     // onPress(true, i, this->onButtonPress)
+            //     // onLongPress(true, i, this->onButtonLongPress)
+            //     // onRelease(true, i, this->onButtonRelease)
+            // }
         }
         ~ManuFormKeyboard(){}
         void loop(){
             btnController->check();
         }
-        void onMatrixButtonPress(int i, int j, int btn, int status) {
+        void matrixButtonPressCallback(int i, int j, int btn, int status) {
             Serial.print("Button pressed on pin ");
             Serial.print(btn);
             Serial.print(" which represents ");
             Serial.printf("%d, %c\n", matrix_keymap[i][j], matrix_keymap[i][j]);
         }
-        void onThumbButtonPress(int btn, int status) {
-            btn = btn-num_cols*num_rows;
-            Serial.print("Button pressed on pin ");
-            Serial.print(btn);
-            Serial.print(" which represents ");
-            Serial.printf("%d, %c\n", thumb_keymap[btn], thumb_keymap[btn]);
-        }
+        // void thumbButtonPressCallback(int btn, int status) {
+        //     btn = btn-num_cols*num_rows;
+        //     Serial.print("Button pressed on pin ");
+        //     Serial.print(btn);
+        //     Serial.print(" which represents ");
+        //     Serial.printf("%d, %c\n", thumb_keymap[btn], thumb_keymap[btn]);
+        // }
         // bool onButtonLongPress(int btn, int status) {
         //     Serial.print("Long button press on pin ");
         //     Serial.println(btn);
@@ -105,12 +109,21 @@ class ManuFormKeyboard: public PhysicalKeyboard  // TODO 模板元编程
         //     Serial.print("Button released on pin ");
         //     Serial.println(btn);
         // }
+        void reportKeyMap(){
+            Serial.println("matrix key map");
+            for (int i=0; i<num_rows; i++){
+                for(int j=0; j<num_cols; j++){
+                    Serial.printf("(%d, %d)=%s\t", i, j, key_2_desc[matrix_keymap[i][j]]);
+                }
+                Serial.println();
+            }
+        }
 
     private: 
-        uint8_t matrix_keymap[num_rows][num_cols];
-        uint8_t thumb_keymap[num_thum_keys];
+        uint8_t matrix_keymap[num_rows][num_cols] = {0};
+        uint8_t thumb_keymap[num_thum_keys] = {0};
         bool _right_hand;
-        BleKeyboard _bleKeyboard;
+        BleKeyboard *_bleKeyboard;
 
         // status of all keys?
     // protected:

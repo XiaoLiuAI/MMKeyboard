@@ -1,23 +1,33 @@
 #include "BleKeyboardLayer.h"
 #include "usb_hid_keys.h"
 #include <iostream>
-#include "PhysicalKeyboardLayer.h"
 #include "utils.h"
 
 
-#define data_pin 25
-#define clk_pin 26
-#define shift_pin 27
+static int data_pin=25;
+static int clk_pin=26;
+static int shift_pin=27;
 
 BleKeyboard bleKeyboard;
 
-#define PHY_KEYBOARD 1;
+#define MM_KEYBOARD 1;
+
+#ifdef MM_KEYBOARD
+#include "ManuFormKeyboard.h"
+
+ManuFormKeyboard *mm_keyboard = new ManuFormKeyboard(true, 2, data_pin, clk_pin, shift_pin, &bleKeyboard);
+#endif
 
 #ifdef PHY_KEYBOARD
+#include "PhysicalKeyboardLayer.h"
+
 PhysicalKeyboard *physicalKeyboard;
 #endif
 
 #ifdef SINGLE_BTN
+#include "PBtnTogglePISOController.h"
+#include "PBtnTogglePISO.h"
+
 PBtnTogglePISOController *btnController = new PBtnTogglePISOController(2, data_pin, clk_pin, shift_pin);
 PBtnTogglePISO *pbtn = new PBtnTogglePISO(0, 0, HIGH);
 #endif
@@ -31,7 +41,7 @@ void setup() {
 
 #ifdef PHY_KEYBOARD
     Serial.println("initial physical key board");
-    physicalKeyboard = new PhysicalKeyboard(2, 25, 26, 27, 1, 1, 0);
+    physicalKeyboard = new PhysicalKeyboard(2, data_pin, clk_pin, shift_pin, 1, 1, 0);
 
     for (int i=0; i<physicalKeyboard->get_num_rows(); i++){
         for (int j=0; j<physicalKeyboard->get_num_rows(); j++){
@@ -48,6 +58,10 @@ void setup() {
     btnController->add(pbtn);
     Serial.println("btn is initialized as ");
     pbtn->reportStatus("setup");
+#endif
+
+#ifdef MM_KEYBOARD
+    mm_keyboard->reportKeyMap();
 #endif
 }
 
